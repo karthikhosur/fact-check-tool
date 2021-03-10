@@ -18,7 +18,7 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 st.write("# Fake Message Recognition Engine")
 
-message_text = st.text_input("Enter a message for  evaluation")
+message_text = st.text_area("Enter a message for  evaluation")
 
 def preprocessor(text):
     text = re.sub('<[^>]*>', '', text) # Effectively removes HTML markup tags
@@ -28,34 +28,27 @@ def preprocessor(text):
 
 model = joblib.load('spam_classifier.joblib')
 
-def classify_message(model, message):
+message_submit = st.button('Evaluate')
 
-	label = model.predict([message])[0]
-	spam_prob = model.predict_proba([message])
-        
+if message_submit:
 
+    label = (model.predict([message_text])[0])
+    spam_prob = (model.predict_proba([message_text]))
+    if label=="spam":
+        label="fake"
+    elif label =="ham":
+        label="real"
 
-	return {'label': label, 'spam_probability': spam_prob[0][1]}
+    result = {'label': label, 'probability': spam_prob[0][1]}
 
-if message_text != '':
-    
-	result = classify_message(model, message_text)
-
-
-	st.write(result)
-
-	
-	explain_pred = st.button('Explain Predictions')
-
-	if explain_pred:
-		with st.spinner('Generating explanations'):
-			class_names = ['Real', 'Fake']
-			explainer = LimeTextExplainer(class_names=class_names)
-			exp = explainer.explain_instance(message_text, 
-				model.predict_proba, num_features=10)
-			components.html(exp.as_html(), height=800)
-	
+    st.write(result)
 
 
+explain_pred = st.button('Explain Predictions')
 
-
+if explain_pred:
+	with st.spinner('Generating explanations'):
+		class_names = ['Real', 'Fake']
+		explainer = LimeTextExplainer(class_names=class_names)
+		exp = explainer.explain_instance(message_text,model.predict_proba, num_features=10)
+		components.html(exp.as_html(), height=800)
